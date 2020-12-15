@@ -1,0 +1,14 @@
+{
+  "name": "y",
+  "version": "0.1.0",
+  "description": "transform data from objects in an organized manner",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test/test.js"
+  },
+  "author": "Kamil Szydlowski",
+  "license": "MIT",
+  "dependencies": {
+    "@ngr900/deep-property": "^0.1.0"
+  }
+}
