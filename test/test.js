@@ -1,5 +1,8 @@
 const { expect } = require('chai');
-const transformData = require('./../src/data-transform.js');
+const {
+	transformData,
+	DataTransformError,
+} = require('./../src/data-transform.js');
 
 describe('transformData', function () {
 	it('transforms objects', function () {
@@ -144,36 +147,47 @@ describe('transformData', function () {
 		const instructions = [
 			{
 				from: {
-          from: ['customer.shippingAddress', null],
-          combine: (address, $root) => ({...address, $root})
-        },
+					paths: ['customer.shippingAddress', null],
+					combine: (address, $root) => ({ ...address, $root }),
+				},
 				to: null,
 				instructions: [
 					{
 						from: {
-							from: [
+							paths: [
 								'streetName',
 								'streetNumber',
 								'zipCode',
 								'cityName',
-                'provinceData.code',
-                '$root.customer.firstName',
-                '$root.customer.lastName',
+								'provinceData.code',
+								'$root.customer.firstName',
+								'$root.customer.lastName',
 							],
 							combine: (street, number, zip, city, province, fname, lname) =>
 								`${fname} ${lname}, ${number} ${street}, ${zip} ${city} ${province}`,
-            },
-            to: 'fullAddress',
-            transform: str => 'Ship to: ' + str
+						},
+						to: 'fullAddress',
+						transform: (str) => 'Ship to: ' + str,
 					},
-        ]
+				],
 			},
-    ];
-    const expectedResultObject = {
-      fullAddress: 'Ship to: Maria Lopez, 23A Harrison Avenue, 122-332 Dayton AZ'
-    }
-    const resultObject = transformData(sourceObject, instructions);
-    expect(resultObject).to.deep.equal(expectedResultObject);
+			{
+				from: 'items',
+				to: 'totalPriceCents',
+				transform: (items) =>
+					items.reduce(
+						(total, { price }) => total + Math.round(price * 100),
+						0
+					),
+			},
+		];
+		const expectedResultObject = {
+			fullAddress:
+				'Ship to: Maria Lopez, 23A Harrison Avenue, 122-332 Dayton AZ',
+			totalPriceCents: 13290,
+		};
+		const resultObject = transformData(sourceObject, instructions);
+		expect(resultObject).to.deep.equal(expectedResultObject);
 	});
 	context('basic instructions', function () {
 		it('applies nested instructions', function () {
@@ -216,7 +230,7 @@ describe('transformData', function () {
 			const resultObject = transformData(sourceObject, instructions);
 			expect(resultObject).to.deep.equal(expectedResultObject);
 		});
-		it('uses entire source as local source if `from` is `null`', function () {
+		it('uses entire source as local source if from:null', function () {
 			const sourceObject = {
 				firstName: 'John',
 				address: {
@@ -246,7 +260,7 @@ describe('transformData', function () {
 			const resultObject = transformData(sourceObject, instructions);
 			expect(resultObject).to.deep.equal(expectedResultObject);
 		});
-		it('assigns properties from nested instructions if `to` is `null`', function () {
+		it('assigns properties from nested instructions if to:null', function () {
 			const sourceObject = {
 				favorites: {
 					food: 'Pizza',
@@ -306,7 +320,7 @@ describe('transformData', function () {
 					},
 					{
 						from: {
-							from: ['firstName', 'lastName', 'details.maidenName'],
+							paths: ['firstName', 'lastName', 'details.maidenName'],
 						},
 						to: 'allNames',
 					}
@@ -314,7 +328,7 @@ describe('transformData', function () {
 			).to.deep.equal({ allNames: ['Jane', 'Doe', 'Smith'] });
 		});
 	});
-	context('extracts and combines multiple values', function () {
+	context('multiple sources', function () {
 		it('extracts and combines multiple values', function () {
 			expect(
 				transformData(
@@ -327,7 +341,7 @@ describe('transformData', function () {
 					},
 					{
 						from: {
-							from: ['firstName', 'lastName', 'details.maidenName'],
+							paths: ['firstName', 'lastName', 'details.maidenName'],
 							combine: (firstName, lastName, maidenName) =>
 								`${firstName} ${lastName} nee ${maidenName}`,
 						},
@@ -348,7 +362,7 @@ describe('transformData', function () {
 					},
 					{
 						from: {
-							from: ['firstName', 'lastName', 'details.maidenNames'],
+							paths: ['firstName', 'lastName', 'details.maidenNames'],
 							combine: (firstName, lastName, maidenName) =>
 								`${firstName} ${lastName} nee ${maidenName}`,
 						},
@@ -370,7 +384,7 @@ describe('transformData', function () {
 					},
 					{
 						from: {
-							from: ['firstName', 'lastName', 'details.maidenName'],
+							paths: ['firstName', 'lastName', 'details.maidenName'],
 							combine: (firstName, lastName, maidenName) =>
 								`${firstName} ${lastName} nee ${maidenName}`,
 						},
@@ -392,7 +406,7 @@ describe('transformData', function () {
 					},
 					{
 						from: {
-							from: ['firstName', 'lastName', 'details.maidenName'],
+							paths: ['firstName', 'lastName', 'details.maidenName'],
 							combine: (firstName, lastName, maidenName) => ({
 								firstName,
 								lastName,
@@ -420,7 +434,7 @@ describe('transformData', function () {
 				allNames: { fname: 'Jane', lname: 'Doe', mname: 'Smith' },
 			});
 		});
-		it('and applies nested instructions, and assigns to root object with `to` === `null`', function () {
+		it('and applies nested instructions, and assigns to root object with to:null', function () {
 			expect(
 				transformData(
 					{
@@ -432,7 +446,7 @@ describe('transformData', function () {
 					},
 					{
 						from: {
-							from: ['firstName', 'lastName', 'details.maidenName'],
+							paths: ['firstName', 'lastName', 'details.maidenName'],
 							combine: (firstName, lastName, maidenName) => ({
 								firstName,
 								lastName,
@@ -470,7 +484,7 @@ describe('transformData', function () {
 					},
 					{
 						from: {
-							from: ['firstName', 'lastName', 'details.maidenName'],
+							paths: ['firstName', 'lastName', 'details.maidenName'],
 							combine: (firstName, lastName, maidenName) => ({
 								firstName,
 								lastName,
@@ -498,5 +512,41 @@ describe('transformData', function () {
 				)
 			).to.deep.equal({ fullName: 'Her name was Jane Doe nee Smith' });
 		});
+	});
+	context('error handling', function () {
+		it('throws error if a path contains illegal values', function () {
+			expect(function () {
+				transformData({}, { from: [null], to: 'prop' });
+			}).to.throw(DataTransformError, 'In "from"');
+			expect(function () {
+				transformData({}, { from: 'prop', to: [null] });
+			}).to.throw(DataTransformError, 'In "to"');
+			expect(function () {
+				transformData({}, { from: { paths: [[null]] }, to: 'prop' });
+			}).to.throw(DataTransformError, 'In "from"');
+		});
+		it('throws an error on a to:null assignment if the result value is not an object', function() {
+			expect(function () {
+				transformData({}, { from: 'prop', to: null });
+			}).to.throw(DataTransformError, 'Cannot assign properties from a non-object');
+		})
+		it('throws an error if the transform property is not a function', function() {
+			expect(function () {
+				transformData({}, { from: 'prop', to: 'newProp', transform: 'not a function' });
+			}).to.throw(DataTransformError, 'Transform is not a function');
+		})
+		it('throws an error if an instruction does not contain a from or to path', function() {
+			expect(function () {
+				transformData({}, { from: 'prop' });
+			}).to.throw(DataTransformError, 'Must supply "to" key path');
+			expect(function () {
+				transformData({}, { to: 'prop' });
+			}).to.throw(DataTransformError, 'Must supply "from" key path');
+		})
+		it('throws an error if source is not an object or array', function() {
+			expect(function () {
+				transformData('', {});
+			}).to.throw(DataTransformError, 'Source must be an object or an array');
+		})
 	});
 });
