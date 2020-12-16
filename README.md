@@ -78,7 +78,7 @@ Instructions may be provided as an array of instruction objects, or a single ins
   - a `string` dot path (e.g. `"foo.bar.baz"`) or an `array` path (e.g. `['foo', 'bar', 'baz']`) to extract a single property
   - `null` to extract the entire root source object (see [Accessing the source's root](#accessing-the-sources-root))
   - an `object` to extract multiple properties (see [Extracting multiple values](#extracting-multiple-values)), with the following properties:
-    - `paths` - required, specifies the properties to be extracted, must be an `array` containing dot path string, array strings, or a mix of the two (e.g. `['foo.bar', ['foo', 'baz']]`)
+    - `paths` - required, specifies the properties to be extracted, must be an `array` containing string dot paths, array paths, or a mix of the two (e.g. `['foo.bar', ['foo', 'baz']]`)
     - `combine` - optional, a `function` used to combine the multiple extracted properties. Will be called with the extracted properties as arguments, in the order in which they appear in the `paths` array. If not provided, the values will be returned as an array.
 - `to` - required, specifies the location at which to save the extracted values. Can take the form of:
   - a `string` dot path (e.g. `"foo.bar.baz"`) or an `array` path (e.g. `['foo', 'bar', 'baz']`) save the extracted value to a specific property
