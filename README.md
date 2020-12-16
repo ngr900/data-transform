@@ -329,4 +329,12 @@ const transformAddress = dataTransformFactory([
     to: 'street'
   }
 ])
+
+const resultObject = transformAddress({ streetName: 'Longview Road' });
+
+// resultObject will be
+
+{
+  street: 'Longview Road'
+}
 ```
