@@ -68,6 +68,12 @@ function throwUnexpectedError(error) {
 	throw error;
 }
 
+function transformDataFactory(instructions) {
+	return function(sourceObject, options = {}) {
+		return transformData(sourceObject, instructions, options);
+	}
+}
+
 function transformData(sourceObject, instructions, options = {}) {
 	options = Object.assign({
 		warn: false,
@@ -185,4 +191,4 @@ function transformData(sourceObject, instructions, options = {}) {
 	return resultObject;
 }
 
-module.exports = { transformData, DataTransformError };
+module.exports = { transformData, transformDataFactory, DataTransformError };

@@ -1,6 +1,7 @@
 const { expect } = require('chai');
 const {
 	transformData,
+	transformDataFactory,
 	DataTransformError,
 } = require('./../src/data-transform.js');
 
@@ -550,3 +551,49 @@ describe('transformData', function () {
 		})
 	});
 });
+
+describe('transformDataFactory', function() {
+	it('returns a new function that performs the transformation', function() {
+		const sourceObject = {
+			firstName: 'John',
+			lastName: 'Doe',
+			address: {
+				streetName: 'Tanglewood Drive',
+				country: {
+					code: 'CA',
+				},
+			},
+		};
+		const instructions = [
+			{
+				from: 'firstName',
+				to: 'name',
+			},
+			{
+				from: 'lastName',
+				to: 'surname',
+			},
+			{
+				from: 'address.streetName',
+				to: 'street',
+			},
+			{
+				from: 'address.country.code',
+				to: 'countryCode',
+			},
+		];
+		const expectedResultObject = {
+			name: 'John',
+			surname: 'Doe',
+			street: 'Tanglewood Drive',
+			countryCode: 'CA',
+		};
+		const factoriedTransform = transformDataFactory(instructions);
+
+		const resultFromDirectCall = transformData(sourceObject, instructions);
+		const resultFromFactoried = factoriedTransform(sourceObject);
+		expect(resultFromDirectCall).to.deep.equal(expectedResultObject);
+		expect(resultFromFactoried).to.deep.equal(expectedResultObject);
+		expect(resultFromFactoried).to.deep.equal(resultFromDirectCall);
+	})
+})
