@@ -63,14 +63,6 @@ class DataTransformError extends Error {
 	}
 }
 
-function isExpectedError(error) {
-	const expectedErrorTypes = [DeepPropertyError];
-	for (const errorType of expectedErrorTypes) {
-		if (error instanceof errorType) return true;
-	}
-	return false;
-}
-
 function throwUnexpectedError(error) {
 	console.warn(`This error should not happen.`);
 	throw error;
