@@ -11,6 +11,28 @@ function extractProperty(sourceObject, path) {
 	}
 }
 
+function extractCombinedProperties(sourceObject, instruction) {
+	const extracts = instruction.from.map((path) =>
+		extractProperty(sourceObject, path)
+	);
+	const allExist = extracts.reduce((state, [exists]) => state && exists, true);
+	if (!allExist) {
+		return [false, undefined];
+	}
+	const allValues = extracts.reduce(
+		(values, [, value]) => [...values, value],
+		[]
+	);
+	const value = instruction.combine
+		? instruction.combine(...allValues)
+		: allValues;
+	return [true, value];
+}
+
+function isObject(value) {
+	return typeof value === 'object' && value !== null;
+}
+
 function transformData(sourceObject, instructions, options = {}) {
 	// if the source is an array, map it using provided instructions
 	if (Array.isArray(sourceObject)) {
@@ -27,21 +49,25 @@ function transformData(sourceObject, instructions, options = {}) {
 	// build the result object
 	const resultObject = {};
 	for (const instruction of instructions) {
-		const [sourceValueExists, sourceValue] = extractProperty(
-			sourceObject,
-			instruction.from
-		);
+		// extract value from source
+		const combinedSource =
+			instruction.from !== null && instruction.from.from !== undefined;
+		const [sourceValueExists, sourceValue] = combinedSource
+			? extractCombinedProperties(sourceObject, instruction.from)
+			: extractProperty(sourceObject, instruction.from);
 
 		let resultValue;
 
 		if (sourceValueExists) {
-			// source value exists
+			// source value exists, apply nested instructions and transform
 			resultValue = sourceValue;
-			if (instruction.include) {
-				resultValue = transformData(resultValue, instruction.include, options);
-				if (instruction.to === null) {
-					Object.assign(resultObject, resultValue);
-				}
+			if (instruction.instructions) {
+				// TODO check if array or object
+				resultValue = transformData(
+					resultValue,
+					instruction.instructions,
+					options
+				);
 			}
 			if (instruction.transform) {
 				resultValue = instruction.transform(
@@ -57,9 +83,18 @@ function transformData(sourceObject, instructions, options = {}) {
 			// no source value and no default
 			resultValue = undefined;
 		}
-		setDeepProperty(resultObject, instruction.to, resultValue);
+
+		// set property or assign
+		if (instruction.to === null) {
+			if (!isObject(resultValue)) {
+				// error
+			}
+			Object.assign(resultObject, resultValue);
+		} else {
+			setDeepProperty(resultObject, instruction.to, resultValue);
+		}
 	}
 	return resultObject;
 }
 
-module.exports = { transformData };
+module.exports = transformData;
