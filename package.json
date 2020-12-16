@@ -1,5 +1,5 @@
 {
-  "name": "y",
+  "name": "@ngr900/data-transform",
   "version": "0.1.0",
   "description": "transform data from objects in an organized manner",
   "main": "index.js",
@@ -9,6 +9,7 @@
   },
   "author": "Kamil Szydlowski",
   "license": "MIT",
+  "repository": "https://github.com/ngr900/data-transform",
   "dependencies": {
     "@ngr900/deep-property": "^0.1.0"
   },
