@@ -71,9 +71,9 @@ Returns: `object` or `array` with the transformed properties
 
 Throws: `DataTransformError`
 
-## instructions
+### Instructions
 
-Instructions may be provided as an array of instruction objects, or a single instruction object (if you only need one transformation). An instruction object can have the following properties:
+Instructions may be provided as an array of instruction objects, or a single instruction object (if you only need one transformation). An instruction object may have the following properties:
 - `from` - required, specifies the properties to be extracted from the source object. Can take the form of:
   - a `string` dot path (e.g. `"foo.bar.baz"`) or an `array` path (e.g. `['foo', 'bar', 'baz']`) to extract a single property
   - `null` to extract the entire root source object (see [Accessing the source's root](#accessing-the-sources-root))
@@ -86,6 +86,20 @@ Instructions may be provided as an array of instruction objects, or a single ins
 - `instructions` - optional, `transformData` will be called on the extracted value with the provided instructions (see [Nested instructions](#nested-instructions))
 - `transform` - optional, a `function` that will called with a single argument containing the extracted value (after applying nested instructions)
 - `default` - optional, a default value to use if the extraction path does not exist on the source object. Will not be used if the property is explicitly set to `undefined` (see [Default vs. `undefined`](#default-vs-undefined)).
+
+### Order of operations in instructions
+
+Nested instructions are applied before transforms. Neither nested instructions nor transforms are applied if the extracted value does not exist.
+
+## transformDataFactory(instructions)
+
+Creates a new function that performs the predetermined transformation from provided instructions. See [Factory example](#factory-example).
+
+Arguments:
+
+- `instructions` - see [instructions](#instructions)
+
+Returns: `function`
 
 # Examples
 
@@ -304,4 +318,15 @@ transformData({ foo: undefined }, {
 {
   bar: undefined
 }
+```
+
+## Factory example
+
+```javascript
+const transformAddress = dataTransformFactory([
+  {
+    from: 'streetName',
+    to: 'street'
+  }
+])
 ```
