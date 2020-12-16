@@ -3,7 +3,7 @@ const {
 	transformData,
 	transformDataFactory,
 	DataTransformError,
-} = require('./../src/data-transform.js');
+} = require('./../dist/data-transform.js');
 
 describe('transformData', function () {
 	it('transforms objects', function () {
