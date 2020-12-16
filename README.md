@@ -53,7 +53,7 @@ const resultObject = transformData(sourceObject, [
   country: 'United States'
 }
 ```
-For more see [Examples](#advanced-usage).
+For more see [Examples](#examples).
 
 # API
 
